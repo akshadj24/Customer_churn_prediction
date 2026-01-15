@@ -130,11 +130,5 @@ A user-friendly web interface was built using **Streamlit**, where users can inp
   - ✅ “Customer is NOT likely to churn”
   - ⚠️ “Customer IS likely to churn”
 
----
-
-## 🛠️ Installation & Setup
-
-### Step 1 — Clone the repository
-```bash
-git clone https://github.com/your-username/customer-churn-ann.git
-cd customer-churn-ann
+## 🚀 Live Demo
+🔗 Streamlit App: https://customerchurnprediction-uyzvbkpphnd6uxt8uxcegd.streamlit.app
