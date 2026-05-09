@@ -1,7 +1,6 @@
 import streamlit as st
 import pickle
 import pandas as pd
-import numpy as np
 from tensorflow.keras.models import load_model  # type: ignore
 
 # ---------------- PAGE CONFIG ----------------
@@ -41,19 +40,32 @@ h1 {
 # ---------------- TITLE ----------------
 st.title("📊 Customer Churn Prediction")
 
-# ---------------- LOAD MODEL & FILES ----------------
-try:
+# ---------------- LOAD FILES WITH CACHE ----------------
+@st.cache_resource
+def load_all_files():
+
+    # Load Model
     model = load_model("model.h5")
-    
+
+    # Load Gender Encoder
     with open("gen_encoder.pkl", "rb") as file:
         gen_encoder = pickle.load(file)
 
+    # Load Geography Encoder
     with open("geo_encoder.pkl", "rb") as file:
         geo_encoder = pickle.load(file)
 
-    # Make sure your file name is scaler.pkl
+    # Load Scaler
     with open("scaler.pkl", "rb") as file:
         scaler = pickle.load(file)
+
+    return model, gen_encoder, geo_encoder, scaler
+
+
+# ---------------- LOADING SPINNER ----------------
+try:
+    with st.spinner("Loading model and files... Please wait ⏳"):
+        model, gen_encoder, geo_encoder, scaler = load_all_files()
 
     st.success("✅ Model Loaded Successfully")
 
@@ -129,7 +141,7 @@ if st.button("Predict Churn"):
 
     try:
 
-        # Create DataFrame
+        # Create Input Dictionary
         data = {
             "CreditScore": CreditScore,
             "Geography": Geography,
@@ -143,9 +155,10 @@ if st.button("Predict Churn"):
             "EstimatedSalary": EstimatedSalary
         }
 
+        # Convert to DataFrame
         data_df = pd.DataFrame([data])
 
-        # Encode Geography
+        # Geography Encoding
         geo_encoded = geo_encoder.transform(
             pd.DataFrame([[data['Geography']]], columns=['Geography'])
         ).toarray()
@@ -155,16 +168,16 @@ if st.button("Predict Churn"):
             columns=geo_encoder.get_feature_names_out(['Geography'])
         )
 
-        # Drop original Geography column
+        # Drop Original Geography Column
         data_df.drop('Geography', axis=1, inplace=True)
 
-        # Encode Gender
+        # Gender Encoding
         data_df['Gender'] = gen_encoder.transform(data_df['Gender'])
 
-        # Combine encoded geography
+        # Merge Encoded Geography
         data_df = pd.concat([data_df, geo_encoded_df], axis=1)
 
-        # Scale data
+        # Scale Data
         data_scaled = scaler.transform(data_df)
 
         # Prediction
@@ -172,15 +185,17 @@ if st.button("Predict Churn"):
 
         prediction_proba = prediction[0][0]
 
+        # ---------------- OUTPUT ----------------
+
         st.subheader("Prediction Result")
 
         if prediction_proba > 0.5:
             st.error(
-                f"⚠️ The customer is likely to churn.\n\nProbability: {prediction_proba:.2f}"
+                f"⚠️ Customer is likely to churn.\n\nProbability: {prediction_proba:.2f}"
             )
         else:
             st.success(
-                f"✅ The customer is not likely to churn.\n\nProbability: {prediction_proba:.2f}"
+                f"✅ Customer is not likely to churn.\n\nProbability: {prediction_proba:.2f}"
             )
 
     except Exception as e:
