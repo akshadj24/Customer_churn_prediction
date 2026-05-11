@@ -1,7 +1,7 @@
 import streamlit as st
 import pickle
 import pandas as pd
-from tensorflow.keras.models import load_model  # type: ignore
+import tensorflow as tf # type: ignore
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -41,26 +41,26 @@ h1 {
 st.title("📊 Customer Churn Prediction")
 
 # ---------------- LOAD FILES WITH CACHE ----------------
+
+
 @st.cache_resource
 def load_all_files():
 
-    # Load Model
-    model = load_model("model.h5")
+    model = tf.keras.models.load_model(
+        "model.h5",
+        compile=False
+    )
 
-    # Load Gender Encoder
     with open("gen_encoder.pkl", "rb") as file:
         gen_encoder = pickle.load(file)
 
-    # Load Geography Encoder
     with open("geo_encoder.pkl", "rb") as file:
         geo_encoder = pickle.load(file)
 
-    # Load Scaler
     with open("scaler.pkl", "rb") as file:
         scaler = pickle.load(file)
 
     return model, gen_encoder, geo_encoder, scaler
-
 
 # ---------------- LOADING SPINNER ----------------
 try:
